@@ -59,8 +59,11 @@ const carPurchaseCollection = client.db('AutoHunt').collection('purchase');
 app.get('/cars', async (req, res) => {
     const { category_name } = req.query;
     // console.log(category_name);
-    const result = await carsCollection.find({ category_name: category_name }).toArray();
 
+    const result = await carsCollection.find({
+        category_name: category_name,
+        available: 'instock'
+    }).toArray();
     res.send(result)
 })
 
@@ -108,6 +111,13 @@ app.post('/user', async (req, res) => {
 app.post('/purchase', async (req, res) => {
     const purchaseInfo = req.body;
     const result = await carPurchaseCollection.insertOne(purchaseInfo);
+    // updating the availability and load it 
+    const data = await carsCollection.updateOne({ _id: ObjectId(purchaseInfo.carID) }, {
+        $set: {
+            available: "outofstock"
+        }
+    })
+    console.log(data);
     res.send(result);
 })
 // add cars
