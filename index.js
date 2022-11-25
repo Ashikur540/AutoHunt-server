@@ -70,6 +70,22 @@ app.get('/category', async (req, res) => {
     res.send(result);
 })
 
+// get purchaselist through email
+app.get('/myPurchaseList', async (req, res) => {
+    const { email } = req.query;
+    // console.log(qey);
+    const query = { buyerEmail: email };
+    const result = await carPurchaseCollection.find(query).toArray();
+    res.send(result);
+})
+
+// get all users through email
+app.get('/users', async (req, res) => {
+
+    const result = await usersCollection.find({}).toArray();
+    res.send(result);
+})
+
 
 
 
