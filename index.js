@@ -110,8 +110,12 @@ app.post('/purchase', async (req, res) => {
     const result = await carPurchaseCollection.insertOne(purchaseInfo);
     res.send(result);
 })
-
-
+// add cars
+app.post('/cars/add', async (req, res) => {
+    const carInfo = req.body;
+    const result = await carsCollection.insertOne(carInfo);
+    res.send(result)
+})
 
 
 
