@@ -175,6 +175,19 @@ app.get('/allCars', async (req, res) => {
     }
 })
 
+// rturn status of an admin is actually an admin or not
+
+app.get('/users/admin/:email', async (req, res) => {
+    const { email } = req.params;
+    // console.log(email)
+    const user = await usersCollection.findOne({ email: email });
+    // console.log(user);
+    console.log(user?.role === 'admin')
+    res.send({
+        isAdmin: user?.role === 'admin'
+    })
+})
+
 /* ################MY get  ########################*/
 
 
@@ -259,7 +272,7 @@ app.delete('/myPurchaseList/:id/:carID', verifyJWT, async (req, res) => {
 })
 
 
-// delete cars from db
+// delete cars from db(ADMIN,SELLER)
 app.delete('/allCars/:id', async (req, res) => {
 
     try {
@@ -274,13 +287,39 @@ app.delete('/allCars/:id', async (req, res) => {
 
 })
 
+// delete users from db(ADMIN MUST)
+app.delete('/users/:id', async (req, res) => {
+
+    try {
+        const { id } = req.params;
+        console.log("trying delet", id);
+        const result = await usersCollection.deleteOne({ _id: ObjectId(id) })
+        console.log(result);
+        // res.send(result)
+    } catch (error) {
+        console.log(error);
+    }
+
+})
+
 
 /* ################MY delete   ########################*/
 
+/* ################MY PUT   ########################*/
+app.put('/users/admin/:id', async (req, res) => {
+    const { id } = req.params;
+    const filter = { _id: ObjectId(id) };
+    const options = { upsert: true };
+    const updatedDoc = {
+        $set: {
+            role: 'admin'
+        }
+    }
+    const result = await usersCollection.updateOne(filter, updatedDoc, options);
+    res.send(result)
+})
 
-
-
-
+/* ################MY PUT   ########################*/
 // -------------------test-----------------------------
 
 app.get("/", (req, res) => {
