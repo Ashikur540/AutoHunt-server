@@ -165,6 +165,16 @@ app.get('/jwt', async (req, res) => {
 })
 
 
+app.get('/allCars', async (req, res) => {
+
+    try {
+        const result = await carsCollection.find({}).toArray();
+        res.send(result);
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 /* ################MY get  ########################*/
 
 
@@ -216,13 +226,56 @@ app.post('/cars/add', async (req, res) => {
 
 /* ################MY post  ########################*/
 
+/* ################MY delete   ########################*/
+
+app.delete('/myPurchaseList/:id/:carID', verifyJWT, async (req, res) => {
+
+    try {
+        // verifi
+        const decodedEmail = req.decoded.email
+
+        const { email } = req.query;
+
+        if (email !== decodedEmail) {
+            return res.status(403).send({
+                message: 'forbidden access.!!!'
+            })
+        }
+
+        const { id, carID } = req.params;
+        // console.log("trying delet", id);
+        const result = await carPurchaseCollection.deleteOne({ _id: ObjectId(id) })
+        console.log(result);
+        // update the status to rerender in ui
+        const data = await carsCollection.updateOne({ _id: ObjectId(carID) }, {
+            $set: {
+                available: "instock"
+            }
+        })
+        res.send(result)
+    } catch (error) {
+        console.log(error);
+    }
+})
 
 
+// delete cars from db
+app.delete('/allCars/:id', async (req, res) => {
+
+    try {
+        const { id } = req.params;
+        // console.log("trying delet", id);
+        const result = await carsCollection.deleteOne({ _id: ObjectId(id) })
+        console.log(result);
+        // res.send(result)
+    } catch (error) {
+        console.log(error);
+    }
+
+})
 
 
-
-
-
+/* ################MY delete   ########################*/
 
 
 
