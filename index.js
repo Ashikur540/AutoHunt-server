@@ -64,7 +64,19 @@ const verifyJWT = (req, res, next) => {
     })
 }
 
+// make sure to verify Admin after jwt verification
+// we are writing this middleware to check if the requested user is really an admin or not
+const verifyAdmin = async (req, res, next) => {
+    // console.log("inside verify admin++++", req.decoded?.email);
+    const decodedEmail = req.decoded?.email;
+    const query = { email: decodedEmail };
+    const user = await usersCollection.findOne(query);
 
+    if (user?.role !== 'admin') {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next();
+}
 
 
 
@@ -125,7 +137,7 @@ app.get('/myPurchaseList', verifyJWT, async (req, res) => {
 })
 
 // get all users through email
-app.get('/users', async (req, res) => {
+app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
 
     try {
         const result = await usersCollection.find({}).toArray();
@@ -165,7 +177,7 @@ app.get('/jwt', async (req, res) => {
 })
 
 
-app.get('/allCars', async (req, res) => {
+app.get('/allCars', verifyJWT, verifyAdmin, async (req, res) => {
 
     try {
         const result = await carsCollection.find({}).toArray();
@@ -225,7 +237,7 @@ app.post('/purchase', async (req, res) => {
     }
 })
 // add cars
-app.post('/cars/add', async (req, res) => {
+app.post('/cars/add', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const carInfo = req.body;
         const result = await carsCollection.insertOne(carInfo);
@@ -273,7 +285,7 @@ app.delete('/myPurchaseList/:id/:carID', verifyJWT, async (req, res) => {
 
 
 // delete cars from db(ADMIN,SELLER)
-app.delete('/allCars/:id', async (req, res) => {
+app.delete('/allCars/:id', verifyJWT, verifyAdmin, async (req, res) => {
 
     try {
         const { id } = req.params;
