@@ -6,6 +6,10 @@ require('dotenv').config();
 const port = process.env.port || 5000
 const app = express();
 const jwt = require('jsonwebtoken');
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
+
+
+
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -35,6 +39,7 @@ const usersCollection = client.db('AutoHunt').collection('users');
 const carsCollection = client.db('AutoHunt').collection('cars');
 const categoryCollection = client.db('AutoHunt').collection('category');
 const carPurchaseCollection = client.db('AutoHunt').collection('purchase');
+const paymentsCollection = client.db('AutoHunt').collection('payments');
 
 
 
@@ -190,14 +195,31 @@ app.get('/allCars', verifyJWT, verifyAdmin, async (req, res) => {
 // rturn status of an admin is actually an admin or not
 
 app.get('/users/admin/:email', async (req, res) => {
-    const { email } = req.params;
-    // console.log(email)
-    const user = await usersCollection.findOne({ email: email });
-    // console.log(user);
-    console.log(user?.role === 'admin')
-    res.send({
-        isAdmin: user?.role === 'admin'
-    })
+    try {
+        const { email } = req.params;
+        // console.log(email)
+        const user = await usersCollection.findOne({ email: email });
+        // console.log(user);
+        console.log(user?.role === 'admin')
+        res.send({
+            isAdmin: user?.role === 'admin'
+        })
+    } catch (error) {
+        console.log(error);
+    }
+})
+
+
+
+// get for payment of specific id car
+app.get('/myPurchaseList/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await carPurchaseCollection.findOne({ _id: ObjectId(id) });
+        res.send(result)
+    } catch (error) {
+        console.log(error);
+    }
 })
 
 /* ################MY get  ########################*/
@@ -248,6 +270,45 @@ app.post('/cars/add', verifyJWT, verifyAdmin, async (req, res) => {
 })
 
 
+// payment api
+app.post('/create-payment-intent', async (req, res) => {
+    // const { sellingPrice } = req.body;
+    const { sellingPrice } = req.body;
+    console.log(sellingPrice);
+
+    // convert to cent or poisa
+    const amount = sellingPrice * 100
+    console.log(amount)
+
+    const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        "payment_method_types": [
+            "card"
+        ],
+    });
+    res.send({
+        clientSecret: paymentIntent.client_secret,
+    });
+})
+
+
+// save payments info
+app.post('/payments', async (req, res) => {
+    const paymentInfo = req.body;
+    const result = await paymentsCollection.insertOne(paymentInfo);
+    // console.log(result);
+    const filter = { _id: ObjectId(paymentInfo.purchasedItemID) };
+    const updatedDoc = {
+        $set: {
+            paid: true,
+            transactionID: paymentInfo.transactionID
+        }
+    }
+    const updatedPurchaseData = await carPurchaseCollection.updateOne(filter, updatedDoc)
+
+    res.send(result);
+})
 
 /* ################MY post  ########################*/
 
