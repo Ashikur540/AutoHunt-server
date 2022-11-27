@@ -101,7 +101,8 @@ app.get('/cars', async (req, res) => {
 
         const result = await carsCollection.find({
             category_name: category_name,
-            available: 'instock'
+            // available: 'instock' || 'outofstock',
+            paid: false,
         }).toArray();
         res.send(result)
     } catch (error) {
@@ -274,11 +275,11 @@ app.post('/cars/add', verifyJWT, verifyAdmin, async (req, res) => {
 app.post('/create-payment-intent', async (req, res) => {
     // const { sellingPrice } = req.body;
     const { sellingPrice } = req.body;
-    console.log(sellingPrice);
+    // console.log(sellingPrice);
 
     // convert to cent or poisa
     const amount = sellingPrice * 100
-    console.log(amount)
+    // console.log(amount)
 
     const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
@@ -299,13 +300,16 @@ app.post('/payments', async (req, res) => {
     const result = await paymentsCollection.insertOne(paymentInfo);
     // console.log(result);
     const filter = { _id: ObjectId(paymentInfo.purchasedItemID) };
+    const filter2 = { _id: ObjectId(paymentInfo.carID) };
     const updatedDoc = {
         $set: {
             paid: true,
-            transactionID: paymentInfo.transactionID
+            transactionID: paymentInfo.transactionID,
+            carID: paymentInfo.carID,
         }
     }
     const updatedPurchaseData = await carPurchaseCollection.updateOne(filter, updatedDoc)
+    const updatedCarData = await carsCollection.updateOne(filter2, updatedDoc)
 
     res.send(result);
 })
