@@ -40,6 +40,7 @@ const carsCollection = client.db('AutoHunt').collection('cars');
 const categoryCollection = client.db('AutoHunt').collection('category');
 const carPurchaseCollection = client.db('AutoHunt').collection('purchase');
 const paymentsCollection = client.db('AutoHunt').collection('payments');
+const reportsCollection = client.db('AutoHunt').collection('reports');
 
 
 
@@ -79,6 +80,17 @@ const verifyAdmin = async (req, res, next) => {
 
     if (user?.role !== 'admin') {
         return res.status(403).send({ message: 'forbidden access' })
+    }
+    next();
+}
+const verifySeller = async (req, res, next) => {
+    console.log("inside verify seller++++", req.decoded?.email);
+    const decodedEmail = req.decoded?.email;
+    const query = { email: decodedEmail };
+    const user = await usersCollection.findOne(query);
+
+    if (user?.account !== 'seller') {
+        return res.status(403).send({ message: 'forbidden access!!not a seller' })
     }
     next();
 }
@@ -268,6 +280,15 @@ app.get('/users/sellers', async (req, res) => {
 
 
 
+app.get('/reports/:email', async (req, res) => {
+    const { email } = req.params;
+    const query = {
+        reportedUserEmail: email
+    }
+    const result = await reportsCollection.find(query).toArray();
+    res.send(result)
+})
+
 
 
 /* ################MY get  ########################*/
@@ -307,7 +328,7 @@ app.post('/purchase', async (req, res) => {
     }
 })
 // add cars
-app.post('/cars/add', verifyJWT, verifyAdmin, async (req, res) => {
+app.post('/cars/add', verifyJWT, async (req, res) => {
     try {
         const carInfo = req.body;
         const result = await carsCollection.insertOne(carInfo);
@@ -316,6 +337,16 @@ app.post('/cars/add', verifyJWT, verifyAdmin, async (req, res) => {
         console.log(error);
     }
 })
+// for sellers 
+// app.post('/cars/seller/add', verifyJWT, verifySeller, async (req, res) => {
+//     try {
+//         const carInfo = req.body;
+//         const result = await carsCollection.insertOne(carInfo);
+//         res.send(result)
+//     } catch (error) {
+//         console.log(error);
+//     }
+// })
 
 
 // payment api
@@ -361,6 +392,17 @@ app.post('/payments', async (req, res) => {
     res.send(result);
 })
 
+
+
+
+// save reports
+app.post('/report', async (req, res) => {
+    const reportedData = req.body;
+    // console.log(req.body);
+    const result = await reportsCollection.insertOne(reportedData);
+    // console.log(result);
+    res.send(result);
+})
 /* ################MY post  ########################*/
 
 /* ################MY delete   ########################*/
@@ -411,6 +453,16 @@ app.delete('/allCars/:id', verifyJWT, verifyAdmin, async (req, res) => {
 
 })
 
+
+
+
+app.delete('/myPurchaseList/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log(id);
+    const result = await reportsCollection.deleteOne({ _id: ObjectId(id) });
+    res.send(result);
+})
+
 // delete users from db(ADMIN MUST)
 app.delete('/users/:id', async (req, res) => {
 
@@ -442,6 +494,26 @@ app.put('/users/admin/:id', async (req, res) => {
     const result = await usersCollection.updateOne(filter, updatedDoc, options);
     res.send(result)
 })
+app.put('/users/seller/:id', async (req, res) => {
+    const { id } = req.params;
+    const filter = { _id: ObjectId(id) };
+    const options = { upsert: true };
+    const updatedDoc = {
+        $set: {
+            verified: true
+        }
+    }
+    const result = await usersCollection.updateOne(filter, updatedDoc, options);
+    res.send(result)
+})
+
+
+
+
+
+
+
+
 
 /* ################MY PUT   ########################*/
 // -------------------test-----------------------------
