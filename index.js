@@ -183,7 +183,7 @@ app.get('/jwt', async (req, res) => {
 })
 
 
-app.get('/allCars', verifyJWT, verifyAdmin, async (req, res) => {
+app.get('/allCars', verifyJWT, async (req, res) => {
 
     try {
         const result = await carsCollection.find({}).toArray();
@@ -193,7 +193,7 @@ app.get('/allCars', verifyJWT, verifyAdmin, async (req, res) => {
     }
 })
 
-// rturn status of an admin is actually an admin or not
+// return status of an admin is actually an admin or not
 
 app.get('/users/admin/:email', async (req, res) => {
     try {
@@ -204,6 +204,22 @@ app.get('/users/admin/:email', async (req, res) => {
         console.log(user?.role === 'admin')
         res.send({
             isAdmin: user?.role === 'admin'
+        })
+    } catch (error) {
+        console.log(error);
+    }
+})
+// return status of an seller is actually an seller or not
+
+app.get('/users/seller/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        // console.log(email)
+        const user = await usersCollection.findOne({ email: email });
+        // console.log(user);
+        console.log('isSeller', user?.account === 'seller')
+        res.send({
+            isSeller: user?.account === 'seller'
         })
     } catch (error) {
         console.log(error);
@@ -222,6 +238,37 @@ app.get('/myPurchaseList/:id', async (req, res) => {
         console.log(error);
     }
 })
+
+
+
+// get all buyers
+app.get('/users/buyers', async (req, res) => {
+    try {
+        // const { email } = req.query;
+
+        const allusers = await usersCollection.find({}).toArray();
+        const buyers = allusers.filter(user => user.account === 'buyer')
+        res.send(buyers)
+    } catch (error) {
+        console.log(error);
+    }
+})
+// get all sellers
+app.get('/users/sellers', async (req, res) => {
+    try {
+        // const { email } = req.query;
+
+        const allusers = await usersCollection.find({}).toArray();
+        const sellers = allusers.filter(user => user.account === 'seller')
+        res.send(sellers)
+    } catch (error) {
+        console.log(error);
+    }
+})
+
+
+
+
 
 /* ################MY get  ########################*/
 
