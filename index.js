@@ -404,7 +404,7 @@ app.delete('/allCars/:id', verifyJWT, verifyAdmin, async (req, res) => {
         // console.log("trying delet", id);
         const result = await carsCollection.deleteOne({ _id: ObjectId(id) })
         console.log(result);
-        // res.send(result)
+        res.send(result)
     } catch (error) {
         console.log(error);
     }
@@ -419,7 +419,7 @@ app.delete('/users/:id', async (req, res) => {
         console.log("trying delet", id);
         const result = await usersCollection.deleteOne({ _id: ObjectId(id) })
         console.log(result);
-        // res.send(result)
+        res.send(result)
     } catch (error) {
         console.log(error);
     }
