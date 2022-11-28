@@ -289,7 +289,10 @@ app.get('/reports/:email', async (req, res) => {
     res.send(result)
 })
 
-
+app.get('/reports', verifyJWT, verifyAdmin, async (req, res) => {
+    const result = await reportsCollection.find({}).toArray();
+    res.send(result)
+})
 
 /* ################MY get  ########################*/
 
