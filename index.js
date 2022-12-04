@@ -41,6 +41,7 @@ const categoryCollection = client.db('AutoHunt').collection('category');
 const carPurchaseCollection = client.db('AutoHunt').collection('purchase');
 const paymentsCollection = client.db('AutoHunt').collection('payments');
 const reportsCollection = client.db('AutoHunt').collection('reports');
+const reviewsCollection = client.db('AutoHunt').collection('reviews');
 
 
 
@@ -254,7 +255,7 @@ app.get('/myPurchaseList/:id', async (req, res) => {
 
 
 // get all buyers
-app.get('/users/buyers', async (req, res) => {
+app.get('/users/buyers', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         // const { email } = req.query;
 
@@ -266,7 +267,7 @@ app.get('/users/buyers', async (req, res) => {
     }
 })
 // get all sellers
-app.get('/users/sellers', async (req, res) => {
+app.get('/users/sellers', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         // const { email } = req.query;
 
@@ -291,6 +292,25 @@ app.get('/reports/:email', async (req, res) => {
 
 app.get('/reports', verifyJWT, verifyAdmin, async (req, res) => {
     const result = await reportsCollection.find({}).toArray();
+    res.send(result)
+})
+
+// get user email specific reviews
+
+app.get('/reviews', async (req, res) => {
+    const { email } = req.query
+    // console.log(email);
+    const query = {
+        reviewerEmail: email
+    }
+    const result = await reviewsCollection.find(query).toArray();
+    res.send(result)
+})
+// get all reviews
+
+app.get('/reviews/all', async (req, res) => {
+
+    const result = await reviewsCollection.find({}).toArray();
     res.send(result)
 })
 
@@ -406,6 +426,19 @@ app.post('/report', async (req, res) => {
     // console.log(result);
     res.send(result);
 })
+
+
+
+
+
+// add reviews
+app.post('/review/add', async (req, res) => {
+
+    const reviewData = req.body;
+    const result = await reviewsCollection.insertOne(reviewData)
+    res.send(result)
+
+})
 /* ################MY post  ########################*/
 
 /* ################MY delete   ########################*/
@@ -473,6 +506,20 @@ app.delete('/users/:id', async (req, res) => {
         const { id } = req.params;
         console.log("trying delet", id);
         const result = await usersCollection.deleteOne({ _id: ObjectId(id) })
+        console.log(result);
+        res.send(result)
+    } catch (error) {
+        console.log(error);
+    }
+
+})
+
+app.delete('/reviews/:id', async (req, res) => {
+
+    try {
+        const { id } = req.params;
+        console.log("trying delet", id);
+        const result = await reviewsCollection.deleteOne({ _id: ObjectId(id) })
         console.log(result);
         res.send(result)
     } catch (error) {
